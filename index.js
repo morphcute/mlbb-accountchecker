@@ -9,7 +9,6 @@ const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-// Keep your existing API endpoint
 app.get("/api/validasi", async (req, res) => {
     try {
         let { id, serverid } = req.query;
@@ -18,7 +17,7 @@ app.get("/api/validasi", async (req, res) => {
             return res.json({
                 status: "success",
                 result: {
-                    nickname: response['in-game-nickname'],
+                    nickname: response['in-game-nickname']?.replace(/\+/g, " "),
                     country: countryList.find(a => a.countryShortCode == response.country)?.countryName || "Unknown"
                 }
             });
