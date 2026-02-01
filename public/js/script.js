@@ -253,3 +253,38 @@
     $('#result-country').text(result.country);
     $('#result-container').removeClass('hidden').addClass('fade-enter');
   }
+
+  // Download Template
+  $('#download-template-btn').on('click', function() {
+      window.location.href = '/api/template';
+  });
+
+  // Tutorial Modal
+  const $modal = $('#tutorial-modal');
+  const $modalContent = $('#tutorial-content');
+
+  function openModal() {
+      $modal.removeClass('hidden');
+      setTimeout(() => {
+          $modal.removeClass('opacity-0');
+          $modalContent.removeClass('opacity-0 transform scale-95');
+      }, 10);
+  }
+
+  function closeModal() {
+      $modal.addClass('opacity-0');
+      $modalContent.addClass('opacity-0 transform scale-95');
+      setTimeout(() => {
+          $modal.addClass('hidden');
+      }, 300);
+  }
+
+  $('#show-tutorial-btn').on('click', openModal);
+  $('#close-tutorial, #close-tutorial-btn-2').on('click', closeModal);
+  
+  // Close on outside click
+  $modal.on('click', function(e) {
+      if (e.target === this) {
+          closeModal();
+      }
+  });

@@ -341,9 +341,21 @@
 
           <!-- Bulk Check Section -->
           <div id="bulk-check-section" class="hidden space-y-6">
-            <div class="text-center sm:text-left">
-              <h2 class="text-lg font-semibold text-white">Mass Verification</h2>
-              <p class="text-slate-400 text-xs mt-1">Upload .xlsx file containing "UID" and "Server" columns</p>
+            <div class="flex items-center justify-between">
+              <div class="text-left">
+                <h2 class="text-lg font-semibold text-white">Mass Verification</h2>
+                <p class="text-slate-400 text-xs mt-1">Upload .xlsx file to scan multiple accounts</p>
+              </div>
+              <div class="flex gap-2">
+                <button id="download-template-btn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 transition-colors flex items-center gap-1.5">
+                  <i data-lucide="download" class="w-3 h-3"></i>
+                  Template
+                </button>
+                <button id="show-tutorial-btn" class="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs rounded-lg border border-amber-500/30 transition-colors flex items-center gap-1.5">
+                  <i data-lucide="help-circle" class="w-3 h-3"></i>
+                  Guide
+                </button>
+              </div>
             </div>
             
             <form id="bulk-form" class="space-y-5">
@@ -426,6 +438,83 @@
       
     </div>
   </main>
+
+  <!-- Tutorial Modal -->
+  <div id="tutorial-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm opacity-0 transition-all duration-300">
+      <div class="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-2xl transform scale-95 opacity-0 transition-all duration-300 shadow-2xl relative overflow-hidden" id="tutorial-content">
+          <!-- Header -->
+          <div class="p-6 border-b border-white/5 flex items-center justify-between bg-slate-800/50">
+              <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                  <i data-lucide="file-spreadsheet" class="text-amber-400"></i>
+                  Excel Format Guide
+              </h3>
+              <button id="close-tutorial" class="text-slate-400 hover:text-white transition-colors">
+                  <i data-lucide="x" class="w-6 h-6"></i>
+              </button>
+          </div>
+          
+          <!-- Body -->
+          <div class="p-6 space-y-6">
+              <div class="space-y-2">
+                  <p class="text-slate-300 text-sm">Please ensure your Excel file follows this exact format. The system requires specific column headers to process data correctly.</p>
+              </div>
+  
+              <!-- Table Visual -->
+              <div class="border border-white/10 rounded-lg overflow-hidden">
+                  <table class="w-full text-sm text-left">
+                      <thead class="bg-emerald-900/20 text-emerald-400 uppercase text-xs font-bold">
+                          <tr>
+                              <th class="px-4 py-3 border-r border-white/5">Players Name</th>
+                              <th class="px-4 py-3 border-r border-white/5">Players IGN</th>
+                              <th class="px-4 py-3 border-r border-white/5">Server</th>
+                              <th class="px-4 py-3">UID</th>
+                          </tr>
+                      </thead>
+                      <tbody class="divide-y divide-white/5 bg-slate-800/30">
+                          <tr class="text-slate-300">
+                              <td class="px-4 py-3 border-r border-white/5 text-slate-500 italic">(Optional)</td>
+                              <td class="px-4 py-3 border-r border-white/5 text-amber-400 font-medium">Auto-Filled</td>
+                              <td class="px-4 py-3 border-r border-white/5 font-mono">1234</td>
+                              <td class="px-4 py-3 font-mono">12345678</td>
+                          </tr>
+                          <tr class="text-slate-300">
+                              <td class="px-4 py-3 border-r border-white/5 text-slate-500 italic">(Optional)</td>
+                              <td class="px-4 py-3 border-r border-white/5 text-amber-400 font-medium">Auto-Filled</td>
+                              <td class="px-4 py-3 border-r border-white/5 font-mono">5678</td>
+                              <td class="px-4 py-3 font-mono">87654321</td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+  
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div class="bg-amber-500/5 border border-amber-500/10 p-3 rounded-lg">
+                      <h4 class="font-bold text-amber-400 mb-1">Required Columns</h4>
+                      <p class="text-slate-400"><strong>UID</strong> and <strong>Server</strong> columns are mandatory for checking.</p>
+                  </div>
+                  <div class="bg-emerald-500/5 border border-emerald-500/10 p-3 rounded-lg">
+                      <h4 class="font-bold text-emerald-400 mb-1">Auto-Filled</h4>
+                      <p class="text-slate-400"><strong>Players IGN</strong> will be filled automatically if the account is found.</p>
+                  </div>
+              </div>
+  
+              <div class="bg-blue-500/5 border border-blue-500/10 p-4 rounded-xl flex items-start gap-3">
+                  <i data-lucide="info" class="w-5 h-5 text-blue-400 shrink-0 mt-0.5"></i>
+                  <div>
+                      <h4 class="font-bold text-blue-400 text-sm">Pro Tip</h4>
+                      <p class="text-slate-400 text-xs mt-1">You can use the <strong>Download Template</strong> button to get a pre-formatted Excel file ready for use.</p>
+                  </div>
+              </div>
+          </div>
+  
+          <!-- Footer -->
+          <div class="p-6 border-t border-white/5 bg-slate-800/50 flex justify-end">
+              <button id="close-tutorial-btn-2" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors">
+                  Got it
+              </button>
+          </div>
+      </div>
+  </div>
   
   <script src="./js/script.js"></script>
 </body>

@@ -136,6 +136,20 @@ app.get("/api/job/:id/download", (req, res) => {
     res.send(buffer);
 });
 
+app.get("/api/template", (req, res) => {
+    const data = [
+        { "Players Name": "Example User", "Players IGN": "", "Server": "1234", "UID": "12345678" }
+    ];
+    const sheet = xlsx.utils.json_to_sheet(data);
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, sheet, "Template");
+    const buffer = xlsx.write(workbook, { type: "buffer", bookType: "xlsx" });
+
+    res.setHeader("Content-Disposition", "attachment; filename=template.xlsx");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.send(buffer);
+});
+
 async function processBulkData(jobId, data) {
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
     
