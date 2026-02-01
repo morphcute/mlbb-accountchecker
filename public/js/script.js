@@ -253,7 +253,6 @@
       `;
       $('#bulk-results-body').append(rowHtml);
   }
-  }
   
   function renderBulkTable(rows) {
       const tbody = $('#bulk-results-body');
