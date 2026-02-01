@@ -3,105 +3,430 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cek ID Akun Mobile Legends</title>
-  <meta name="description" content="Cek Username dan Region Akun Mobile Legends lewat ID">
+  <title>Mobile Legends Account Checker</title>
+  <meta name="description" content="Check Mobile Legends Account Username and Region via ID">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="./css/output.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    
+    .animated-gradient {
+      background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .animated-gradient::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.08), transparent 50%);
+      animation: pulse 15s infinite;
+      z-index: 0;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.2); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 0.5; }
+    }
+    
+    .glass-card {
+      background: rgba(30, 41, 59, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    
+    .glass-input {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.2s ease;
+    }
+    
+    .glass-input:focus {
+      background: rgba(15, 23, 42, 0.8);
+      border-color: rgba(56, 189, 248, 0.5);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+    
+    .primary-button {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      box-shadow: 0 4px 6px -1px rgba(217, 119, 6, 0.2);
+      transition: all 0.2s;
+      border: 1px solid rgba(251, 191, 36, 0.2);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    .primary-button:hover {
+      box-shadow: 0 10px 15px -3px rgba(217, 119, 6, 0.3), 0 0 15px rgba(245, 158, 11, 0.3);
+      transform: translateY(-1px);
+      background: linear-gradient(135deg, #fbbf24, #d97706);
+    }
+    
+    .primary-button:active {
+      transform: translateY(0);
+    }
 
-  </script>
+    .primary-button:disabled {
+      background: #475569;
+      box-shadow: none;
+      border-color: transparent;
+      cursor: not-allowed;
+    }
+
+    .mythic-glow {
+      box-shadow: 0 0 20px rgba(234, 179, 8, 0.1);
+    }
+
+    .glass-input:focus {
+      background: rgba(15, 23, 42, 0.8);
+      border-color: rgba(251, 191, 36, 0.5);
+      box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
+    }
+
+    .fade-enter {
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeIn 0.4s ease forwards;
+    }
+    
+    @keyframes fadeIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .progress-bar-container {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 9999px;
+      overflow: hidden;
+      height: 8px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #f59e0b, #fcd34d);
+      border-radius: 9999px;
+      width: 0%;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+    }
+
+    /* Floating Particles */
+    .particle {
+      position: absolute;
+      background: rgba(251, 191, 36, 0.2);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: float 20s infinite linear;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.5; }
+      90% { opacity: 0.5; }
+      100% { transform: translateY(-100vh) translateX(50px) rotate(360deg); opacity: 0; }
+    }
+    
+    .gold-text-gradient {
+      background: linear-gradient(to right, #fcd34d, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .glass-table-container {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.4);
+    }
+    
+    .glass-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.875rem;
+    }
+    
+    .glass-table th {
+      background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      font-weight: 500;
+      color: #94a3b8;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .glass-table td {
+      padding: 12px 16px;
+      color: #e2e8f0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    
+    .glass-table tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .glass-table tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    .status-success {
+      background: rgba(16, 185, 129, 0.1);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    
+    .status-error {
+      background: rgba(239, 68, 68, 0.1);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.3);
+    }
+  </style>
 </head>
-<body class="bg-gray-900 text-white">
-  <main class="min-h-screen flex flex-col items-center justify-center p-4 animated-gradient">
-    <div class="w-full max-w-md px-4 sm:px-0">
-      <div class="mb-6 text-center fade-in" id="header">
-        <div class="flex items-center justify-center mb-2">
-          <img src="./img/logo-ml.webp" class="h-20 w-32 text-white">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col selection:bg-blue-500/30">
+
+  <main class="flex-grow flex flex-col items-center justify-center p-4 animated-gradient relative z-10 overflow-hidden">
+    <!-- Particles -->
+    <div class="particle w-2 h-2 top-[90%] left-[10%]"></div>
+    <div class="particle w-3 h-3 top-[80%] left-[20%]"></div>
+    <div class="particle w-1 h-1 top-[70%] left-[80%]"></div>
+    <div class="particle w-4 h-4 top-[60%] left-[90%]"></div>
+    <div class="particle w-2 h-2 top-[50%] left-[30%]"></div>
+    <div class="particle w-1 h-1 top-[40%] left-[70%]"></div>
+
+    <div class="w-full max-w-lg relative z-20">
+      
+      <!-- Header -->
+      <div class="mb-8 text-center fade-enter" style="animation-delay: 0.1s;">
+        <div class="inline-flex items-center justify-center mb-4 relative group">
+          <div class="absolute inset-0 bg-amber-500/20 blur-xl rounded-full opacity-50 group-hover:opacity-75 transition-opacity duration-500"></div>
+          <img src="./img/logo-ml.webp" class="h-24 w-auto relative z-10 drop-shadow-2xl transform transition-transform duration-500 group-hover:scale-105" alt="MLBB Logo">
         </div>
-        <h1 class="text-2xl font-bold text-white">Cek ID Akun Mobile Legends</h1>
-        <p class="text-white/70 text-sm mt-1">Cek Username dan Region Akun Mobile Legends lewat ID</p>
+        <h1 class="text-3xl font-bold text-white tracking-tight mb-2 font-display uppercase tracking-widest"><span class="gold-text-gradient">MLBB</span> Checker</h1>
+        <p class="text-slate-400 text-sm">Verify account authenticity instantly</p>
       </div>
       
-      <div class="fade-in fade-in-delay" id="card-container">
-        <div class="bg-white/10 backdrop-blur border border-white/20 shadow-xl rounded-lg">
-          <div class="pb-3 pt-5 px-6">
-            <h2 class="text-lg font-medium text-white">ID Akun Mobile Legends</h2>
-            <p class="text-white/70 text-sm">Masukkan User ID dan Server ID akun Mobile Legends Anda</p>
-          </div>
+      <!-- Main Card -->
+      <div class="glass-card rounded-2xl overflow-hidden fade-enter" style="animation-delay: 0.2s;">
+        
+        <!-- Tabs -->
+        <div class="flex border-b border-white/5 bg-black/20">
+          <button id="tab-single" class="flex-1 py-4 text-sm font-medium text-amber-400 border-b-2 border-amber-500 bg-white/5 transition-all">
+            <div class="flex items-center justify-center gap-2">
+              <i data-lucide="user" class="w-4 h-4"></i>
+              Single Search
+            </div>
+          </button>
+          <button id="tab-bulk" class="flex-1 py-4 text-sm font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent transition-all hover:bg-white/5">
+            <div class="flex items-center justify-center gap-2">
+              <i data-lucide="files" class="w-4 h-4"></i>
+              Mass Check
+            </div>
+          </button>
+        </div>
+
+        <div class="p-6 sm:p-8">
           
-          <div class="px-6 pb-6">
-            <form id="validation-form" class="space-y-4">
-              <div class="space-y-1.5">
-                <label for="gameId" class="text-white/90 text-sm block">User ID</label>
-                <input type="number"
-                  id="gameId"
-                  placeholder="Masukkan User ID Anda" autocomplete="off"
-                  class="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 h-9 px-3 rounded-md focus:outline-none focus:ring-2 focus:ring-white/30"
-                />
+          <!-- Single Check Section -->
+          <div id="single-check-section" class="space-y-6">
+            <div class="text-center sm:text-left">
+              <h2 class="text-lg font-semibold text-white">Target Account</h2>
+              <p class="text-slate-400 text-xs mt-1">Enter ID and Server to scan profile</p>
+            </div>
+            
+            <form id="validation-form" class="space-y-5">
+              <div class="grid grid-cols-3 gap-4">
+                <div class="col-span-2 space-y-1.5">
+                  <label for="gameId" class="text-slate-300 text-xs font-medium uppercase tracking-wider ml-1">Account ID</label>
+                  <input type="number" id="gameId" placeholder="12345678" autocomplete="off"
+                    class="glass-input w-full text-white placeholder:text-slate-600 h-11 px-4 rounded-xl focus:outline-none" />
+                </div>
+                
+                <div class="space-y-1.5">
+                  <label for="serverId" class="text-slate-300 text-xs font-medium uppercase tracking-wider ml-1">Zone ID</label>
+                  <input type="number" id="serverId" placeholder="1234" autocomplete="off"
+                    class="glass-input w-full text-white placeholder:text-slate-600 h-11 px-4 rounded-xl focus:outline-none" />
+                </div>
               </div>
               
-              <div class="space-y-1.5">
-                <label for="serverId" class="text-white/90 text-sm block">Server ID</label>
-                <input type="number"
-                  id="serverId"
-                  placeholder="Masukkan Server ID Anda" autocomplete="off"
-                  class="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 h-9 px-3 rounded-md focus:outline-none focus:ring-2 focus:ring-white/30"
-                />
-              </div>
-              
-              <button
-                type="submit"
-                id="submit-button"
-                class="w-full bg-white/15 hover:bg-white/25 text-white border-0 h-9 mt-2 transition-all duration-200 rounded-md"
-              >
-                <span>Cek Sekarang!</span>
+              <button type="submit" id="submit-button"
+                class="primary-button w-full h-11 text-white font-medium rounded-xl flex items-center justify-center gap-2 uppercase tracking-wide text-sm font-bold">
+                <span>Scan Account</span>
+                <i data-lucide="scan-line" class="w-4 h-4"></i>
               </button>
             </form>
             
-            <div id="error-container" class="mt-4 bg-red-500/20 border-0 text-white p-3 rounded-md hidden">
-              <div class="flex items-center">
-                <i data-lucide="alert-circle" class="h-4 w-4 text-white"></i>
-                <p class="ml-2 text-sm" id="error-message"></p>
+            <!-- Single Result -->
+            <div id="result-container" class="hidden rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-900/10 border border-emerald-500/20 p-4 relative overflow-hidden group">
+              <div class="absolute inset-0 bg-emerald-500/5 group-hover:bg-emerald-500/10 transition-colors"></div>
+              <div class="absolute top-0 right-0 p-2 opacity-20">
+                 <i data-lucide="shield-check" class="w-16 h-16 text-emerald-500"></i>
+              </div>
+              <div class="flex items-start gap-3 relative z-10">
+                <div class="p-2 bg-emerald-500/20 rounded-full shrink-0 border border-emerald-500/30">
+                  <i data-lucide="check" class="w-5 h-5 text-emerald-400"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-emerald-400 font-bold text-sm mb-1 tracking-wide uppercase">Valid Account</h3>
+                  <div class="grid grid-cols-2 gap-4 mt-3">
+                    <div>
+                      <p class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Nickname</p>
+                      <p class="text-white font-medium truncate font-display text-lg shadow-black drop-shadow-sm" id="result-nickname">-</p>
+                    </div>
+                    <div>
+                      <p class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Region</p>
+                      <p class="text-white font-medium truncate font-display text-lg shadow-black drop-shadow-sm" id="result-country">-</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Single Error -->
+            <div id="error-container" class="hidden rounded-xl bg-red-500/10 border border-red-500/20 p-4">
+              <div class="flex items-center gap-3">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-red-400"></i>
+                <p class="text-red-300 text-sm font-medium" id="error-message">Error message here</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bulk Check Section -->
+          <div id="bulk-check-section" class="hidden space-y-6">
+            <div class="text-center sm:text-left">
+              <h2 class="text-lg font-semibold text-white">Mass Verification</h2>
+              <p class="text-slate-400 text-xs mt-1">Upload .xlsx file containing "UID" and "Server" columns</p>
+            </div>
+            
+            <form id="bulk-form" class="space-y-5">
+              <div class="relative group">
+                <input type="file" id="excelFile" accept=".xlsx, .xls"
+                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                <div class="glass-input border-dashed border-2 border-slate-600 rounded-xl p-8 text-center transition-all group-hover:border-amber-500/50 group-hover:bg-slate-800/50">
+                  <div class="mx-auto w-12 h-12 bg-slate-700/50 rounded-full flex items-center justify-center mb-3 text-slate-400 group-hover:text-amber-400 group-hover:bg-amber-500/10 transition-colors">
+                    <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                  </div>
+                  <p class="text-sm text-slate-300 font-medium" id="file-name-display">Click or Drag Excel file here</p>
+                  <p class="text-xs text-slate-500 mt-1">Supported formats: .xlsx, .xls</p>
+                </div>
+              </div>
+              
+              <button type="submit" id="bulk-submit-button" disabled
+                class="primary-button w-full h-11 text-white font-medium rounded-xl flex items-center justify-center gap-2 opacity-50 cursor-not-allowed uppercase tracking-wide text-sm font-bold">
+                <span>Start Batch Process</span>
+                <i data-lucide="play" class="w-4 h-4"></i>
+              </button>
+            </form>
+
+            <!-- Progress Section -->
+            <div id="bulk-progress-container" class="hidden space-y-4">
+              <div class="space-y-3">
+                <div class="flex justify-between text-xs text-slate-400">
+                  <span id="progress-status-text">Processing...</span>
+                  <span id="progress-percentage">0%</span>
+                </div>
+                <div class="progress-bar-container">
+                  <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+                <p class="text-center text-xs text-slate-500" id="progress-detail">0 / 0 accounts checked</p>
+              </div>
+
+              <!-- Results Table Preview -->
+              <div class="glass-table-container custom-scrollbar">
+                <table class="glass-table">
+                  <thead>
+                    <tr>
+                      <th class="w-16">#</th>
+                      <th>Server</th>
+                      <th>ID</th>
+                      <th>Username</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="bulk-results-body">
+                    <!-- Rows will be injected here -->
+                  </tbody>
+                </table>
               </div>
             </div>
             
-            <div id="result-container" class="mt-4 p-3 rounded-md bg-white/10 hidden">
-              <div class="flex items-center gap-2 mb-2">
-                <i data-lucide="check-circle-2" class="h-4 w-4 text-green-300"></i>
-                <h3 class="font-medium text-white text-sm">Akun Valid</h3>
-              </div>
-              
-              <div class="space-y-2 mt-2">
-                <div class="flex items-center gap-2">
-                  <i data-lucide="user" class="h-4 w-4 text-white/70"></i>
-                  <div>
-                    <p class="text-xs text-white/70">Nickname</p>
-                    <p class="text-white text-sm" id="result-nickname"></p>
-                  </div>
-                </div>
-                
-                <div class="flex items-center gap-2">
-                  <i data-lucide="globe" class="h-4 w-4 text-white/70"></i>
-                  <div>
-                    <p class="text-xs text-white/70">Country</p>
-                    <p class="text-white text-sm" id="result-country"></p>
-                  </div>
-                </div>
+            <!-- Bulk Error -->
+            <div id="bulk-error-container" class="hidden rounded-xl bg-red-500/10 border border-red-500/20 p-4">
+              <div class="flex items-center gap-3">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-red-400"></i>
+                <p class="text-red-300 text-sm font-medium" id="bulk-error-message">Error message</p>
               </div>
             </div>
+
+            <!-- Download Button (After Complete) -->
+             <div id="download-container" class="hidden">
+                 <button id="download-btn" class="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-900/20">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>Download Result</span>
+                 </button>
+             </div>
           </div>
-          
-          <div class="flex justify-center pt-2 pb-3 border-t border-white/10 px-6">
-            <p class="text-xs text-white/50">
-              © <span id="current-year"></span> <a href="//caliph.dev">@caliphdev</a>
-            </p>
-          </div>
+
         </div>
       </div>
+      
+      <div class="mt-8 text-center">
+        <p class="text-xs text-slate-500">
+          © <span id="current-year"></span> <a href="https://www.facebook.com/ohsnpitskimmm/" class="text-slate-400 hover:text-blue-400 transition-colors">@MORPH.</a>
+        </p>
+      </div>
+      
     </div>
   </main>
+  
   <script src="./js/script.js"></script>
 </body>
 </html>

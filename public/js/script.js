@@ -4,15 +4,48 @@
   // Set current year
   $('#current-year').text(new Date().getFullYear());
   
-  // Fade in animations
-  setTimeout(function() {
-    $('#header').addClass('active');
-    setTimeout(function() {
-      $('#card-container').addClass('active');
-    }, 100);
-  }, 100);
+  // Tab Switching
+  $('#tab-single').on('click', function() {
+      // Styles for active tab
+      $(this).removeClass('text-slate-400 border-transparent hover:bg-white/5')
+             .addClass('text-amber-400 border-amber-500 bg-white/5');
+      
+      // Styles for inactive tab
+      $('#tab-bulk').removeClass('text-amber-400 border-amber-500 bg-white/5')
+                    .addClass('text-slate-400 border-transparent hover:bg-white/5');
+      
+      // Show/Hide sections
+      $('#single-check-section').removeClass('hidden');
+      $('#bulk-check-section').addClass('hidden');
+  });
+
+  $('#tab-bulk').on('click', function() {
+      // Styles for active tab
+      $(this).removeClass('text-slate-400 border-transparent hover:bg-white/5')
+             .addClass('text-amber-400 border-amber-500 bg-white/5');
+      
+      // Styles for inactive tab
+      $('#tab-single').removeClass('text-amber-400 border-amber-500 bg-white/5')
+                    .addClass('text-slate-400 border-transparent hover:bg-white/5');
+      
+      // Show/Hide sections
+      $('#bulk-check-section').removeClass('hidden');
+      $('#single-check-section').addClass('hidden');
+  });
+
+  // File Input Change
+  $('#excelFile').on('change', function() {
+      const fileName = this.files[0]?.name;
+      if (fileName) {
+          $('#file-name-display').text(fileName).addClass('text-amber-400').removeClass('text-slate-300');
+          $('#bulk-submit-button').prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');
+      } else {
+          $('#file-name-display').text('Click or Drag Excel file here').addClass('text-slate-300').removeClass('text-amber-400');
+          $('#bulk-submit-button').prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+      }
+  });
   
-  // Form submission
+  // Single Check Form submission
   $('#validation-form').on('submit', function(e) {
     e.preventDefault();
     
@@ -20,13 +53,13 @@
     const serverId = $('#serverId').val();
     
     if (!gameId || !serverId) {
-      showError('Harap Masukkan User ID dan Server ID');
+      showError('Please enter User ID and Server ID');
       return;
     }
     
     // Show loading state
     const originalButtonText = $('#submit-button').html();
-    $('#submit-button').html('<div class="flex items-center justify-center"><i data-lucide="loader-2" class="mr-2 h-4 w-4 animate-spin"></i><span>Mengecek...</span></div>');
+    $('#submit-button').html('<i data-lucide="loader-2" class="animate-spin w-4 h-4"></i><span>Checking...</span>');
     $('#submit-button').prop('disabled', true);
     lucide.createIcons();
     
@@ -68,33 +101,155 @@
         // Reset button state
         $('#submit-button').html(originalButtonText);
         $('#submit-button').prop('disabled', false);
+        lucide.createIcons();
       }
     });
   });
+
+  // Bulk Check Variables
+  let pollInterval;
+
+  // Bulk Check Form submission
+  $('#bulk-form').on('submit', function(e) {
+      e.preventDefault();
+
+      const fileInput = $('#excelFile')[0];
+      if (fileInput.files.length === 0) {
+          showBulkError('Please upload an Excel file');
+          return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      // UI Updates
+      $('#bulk-submit-button').prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+      $('#bulk-progress-container').removeClass('hidden');
+      $('#bulk-error-container').addClass('hidden');
+      $('#download-container').addClass('hidden');
+      
+      // Reset progress
+      updateProgress(0, 0, 0);
+      $('#bulk-results-body').empty(); // Clear previous results
+
+      $.ajax({
+          url: '/api/bulk-check',
+          type: 'POST',
+          data: formData,
+          processData: false,
+          contentType: false,
+          success: function(data) {
+              if (data.status === 'success' && data.jobId) {
+                  startPolling(data.jobId);
+              } else {
+                  showBulkError(data.message || 'Failed to start processing');
+                  resetBulkState();
+              }
+          },
+          error: function(xhr) {
+               let errorMessage = 'Error uploading file';
+               try {
+                   const res = JSON.parse(xhr.responseText);
+                   errorMessage = res.message || errorMessage;
+               } catch(e) {}
+               showBulkError(errorMessage);
+               resetBulkState();
+          }
+      });
+  });
+
+  function startPolling(jobId) {
+      pollInterval = setInterval(function() {
+          $.ajax({
+              url: '/api/job/' + jobId,
+              type: 'GET',
+              success: function(response) {
+                  if (response.status === 'success') {
+                      const job = response.data;
+                      updateProgress(job.progress, job.processed, job.total);
+                      
+                      // Render Table Rows
+                      if (job.rows && job.rows.length > 0) {
+                          renderBulkTable(job.rows);
+                      }
+
+                      if (job.status === 'completed') {
+                          clearInterval(pollInterval);
+                          $('#progress-status-text').text('Completed!').addClass('text-emerald-400');
+                          $('#download-container').removeClass('hidden');
+                          
+                          // Setup download button
+                          $('#download-btn').off('click').on('click', function() {
+                              window.location.href = '/api/job/' + jobId + '/download';
+                          });
+                          
+                      } else if (job.status === 'failed') {
+                          clearInterval(pollInterval);
+                          showBulkError('Job failed: ' + job.error);
+                          resetBulkState();
+                      }
+                  }
+              },
+              error: function() {
+                  clearInterval(pollInterval);
+                  showBulkError('Error checking job status');
+                  resetBulkState();
+              }
+          });
+      }, 1000);
+  }
+  
+  function renderBulkTable(rows) {
+      const tbody = $('#bulk-results-body');
+      tbody.empty();
+      
+      rows.forEach(row => {
+          let statusClass = 'status-error';
+          if (row.status === 'Found') {
+              statusClass = 'status-success';
+          }
+          
+          const tr = `
+            <tr>
+              <td>${row.id}</td>
+              <td>${row.server}</td>
+              <td>${row.uid}</td>
+              <td>${row.username}</td>
+              <td><span class="status-badge ${statusClass}">${row.status}</span></td>
+            </tr>
+          `;
+          tbody.append(tr);
+      });
+      
+      // Auto scroll to bottom
+      const container = $('.glass-table-container');
+      container.scrollTop(container[0].scrollHeight);
+  }
+
+  function updateProgress(percentage, processed, total) {
+      $('#progress-bar-fill').css('width', percentage + '%');
+      $('#progress-percentage').text(percentage + '%');
+      $('#progress-detail').text(`${processed} / ${total} accounts checked`);
+  }
+
+  function resetBulkState() {
+      $('#bulk-submit-button').prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');
+      $('#bulk-progress-container').addClass('hidden');
+      $('#bulk-results-body').empty();
+  }
   
   function showError(message) {
     $('#error-message').text(message);
-    $('#error-container').removeClass('hidden');
-    
-    // Add fade-in effect
-    $('#error-container').css('opacity', '0');
-    $('#error-container').css('transform', 'translateY(5px)');
-    setTimeout(function() {
-      $('#error-container').css('opacity', '1');
-      $('#error-container').css('transform', 'translateY(0)');
-    }, 10);
+    $('#error-container').removeClass('hidden').addClass('fade-enter');
+  }
+
+  function showBulkError(message) {
+      $('#bulk-error-message').text(message);
+      $('#bulk-error-container').removeClass('hidden').addClass('fade-enter');
   }
   
   function showResult(result) {
     $('#result-nickname').text(result.nickname);
     $('#result-country').text(result.country);
-    $('#result-container').removeClass('hidden');
-    
-    // Add fade-in effect
-    $('#result-container').css('opacity', '0');
-    $('#result-container').css('transform', 'translateY(5px)');
-    setTimeout(function() {
-      $('#result-container').css('opacity', '1');
-      $('#result-container').css('transform', 'translateY(0)');
-    }, 10);
+    $('#result-container').removeClass('hidden').addClass('fade-enter');
   }
