@@ -107,11 +107,13 @@
   });
 
   // Bulk Check Variables
-  let pollInterval;
+  let isProcessing = false;
+  let bulkResults = [];
 
-  // Bulk Check Form submission
-  $('#bulk-form').on('submit', function(e) {
+  // Bulk Check Form submission (Client-Side)
+  $('#bulk-form').on('submit', async function(e) {
       e.preventDefault();
+      if (isProcessing) return;
 
       const fileInput = $('#excelFile')[0];
       if (fileInput.files.length === 0) {
@@ -119,84 +121,138 @@
           return;
       }
 
-      const formData = new FormData();
-      formData.append('file', fileInput.files[0]);
+      const file = fileInput.files[0];
+      const reader = new FileReader();
 
-      // UI Updates
-      $('#bulk-submit-button').prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
-      $('#bulk-progress-container').removeClass('hidden');
-      $('#bulk-error-container').addClass('hidden');
-      $('#download-container').addClass('hidden');
-      
-      // Reset progress
-      updateProgress(0, 0, 0);
-      $('#bulk-results-body').empty(); // Clear previous results
+      reader.onload = async function(e) {
+          try {
+              const data = new Uint8Array(e.target.result);
+              const workbook = XLSX.read(data, { type: 'array' });
+              const firstSheetName = workbook.SheetNames[0];
+              const worksheet = workbook.Sheets[firstSheetName];
+              const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      $.ajax({
-          url: '/api/bulk-check',
-          type: 'POST',
-          data: formData,
-          processData: false,
-          contentType: false,
-          success: function(data) {
-              if (data.status === 'success' && data.jobId) {
-                  startPolling(data.jobId);
-              } else {
-                  showBulkError(data.message || 'Failed to start processing');
-                  resetBulkState();
+              // Filter valid rows
+              const rowsToCheck = jsonData.filter(row => row['UID'] || row['Server']);
+
+              if (rowsToCheck.length === 0) {
+                  showBulkError('No valid data found in Excel (Columns "UID" and "Server" required)');
+                  return;
               }
-          },
-          error: function(xhr) {
-               let errorMessage = 'Error uploading file';
-               try {
-                   const res = JSON.parse(xhr.responseText);
-                   errorMessage = res.message || errorMessage;
-               } catch(e) {}
-               showBulkError(errorMessage);
-               resetBulkState();
+
+              // UI Updates
+              isProcessing = true;
+              bulkResults = []; // Reset results
+              $('#bulk-submit-button').prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+              $('#bulk-progress-container').removeClass('hidden');
+              $('#bulk-error-container').addClass('hidden');
+              $('#download-container').addClass('hidden');
+              $('#bulk-results-body').empty();
+              
+              updateProgress(0, 0, rowsToCheck.length);
+
+              // Process rows
+              for (let i = 0; i < rowsToCheck.length; i++) {
+                  const row = rowsToCheck[i];
+                  const uid = row['UID'];
+                  const server = row['Server'];
+                  let resultRow = { ...row };
+
+                  try {
+                      if (uid && server) {
+                          // Call API
+                          const response = await checkAccount(uid, server);
+                          if (response.status === 'success') {
+                              resultRow['Players IGN'] = response.result.nickname;
+                              resultRow['Status'] = 'Found';
+                              // Update UI Table
+                              appendBulkRow(i + 1, server, uid, response.result.nickname, 'Found');
+                          } else {
+                              resultRow['Players IGN'] = 'not found';
+                              resultRow['Status'] = 'Not Found';
+                              appendBulkRow(i + 1, server, uid, 'not found', 'Not Found');
+                          }
+                      } else {
+                          resultRow['Players IGN'] = 'Invalid Data';
+                          resultRow['Status'] = 'Error';
+                          appendBulkRow(i + 1, server || '-', uid || '-', 'Invalid Data', 'Error');
+                      }
+                  } catch (err) {
+                      resultRow['Players IGN'] = 'Error';
+                      resultRow['Status'] = 'Error';
+                      appendBulkRow(i + 1, server, uid, 'Error', 'Error');
+                  }
+
+                  bulkResults.push(resultRow);
+                  updateProgress(Math.round(((i + 1) / rowsToCheck.length) * 100), i + 1, rowsToCheck.length);
+                  
+                  // Small delay
+                  await new Promise(r => setTimeout(r, 50));
+              }
+
+              // Complete
+              isProcessing = false;
+              $('#progress-status-text').text('Completed!').addClass('text-emerald-400');
+              $('#download-container').removeClass('hidden');
+
+              // Setup download button
+              $('#download-btn').off('click').on('click', function() {
+                  downloadResults(bulkResults);
+              });
+
+          } catch (error) {
+              console.error(error);
+              showBulkError('Error parsing Excel file: ' + error.message);
+              resetBulkState();
           }
-      });
+      };
+
+      reader.readAsArrayBuffer(file);
   });
 
-  function startPolling(jobId) {
-      pollInterval = setInterval(function() {
+  function checkAccount(id, server) {
+      return new Promise((resolve, reject) => {
           $.ajax({
-              url: '/api/job/' + jobId,
+              url: '/api/validasi',
               type: 'GET',
-              success: function(response) {
-                  if (response.status === 'success') {
-                      const job = response.data;
-                      updateProgress(job.progress, job.processed, job.total);
-                      
-                      // Render Table Rows
-                      if (job.rows && job.rows.length > 0) {
-                          renderBulkTable(job.rows);
-                      }
-
-                      if (job.status === 'completed') {
-                          clearInterval(pollInterval);
-                          $('#progress-status-text').text('Completed!').addClass('text-emerald-400');
-                          $('#download-container').removeClass('hidden');
-                          
-                          // Setup download button
-                          $('#download-btn').off('click').on('click', function() {
-                              window.location.href = '/api/job/' + jobId + '/download';
-                          });
-                          
-                      } else if (job.status === 'failed') {
-                          clearInterval(pollInterval);
-                          showBulkError('Job failed: ' + job.error);
-                          resetBulkState();
-                      }
-                  }
+              data: { id, serverid: server },
+              success: function(data) {
+                  resolve(data);
               },
-              error: function() {
-                  clearInterval(pollInterval);
-                  showBulkError('Error checking job status');
-                  resetBulkState();
+              error: function(err) {
+                  resolve({ status: 'failed', message: 'Network error' });
               }
           });
-      }, 1000);
+      });
+  }
+
+  function downloadResults(data) {
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Results");
+      XLSX.writeFile(wb, "MLBB_Check_Results.xlsx");
+  }
+
+  function appendBulkRow(index, server, uid, username, status) {
+      const statusClass = status === 'Found' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 
+                          status === 'Not Found' ? 'text-red-400 bg-red-500/10 border-red-500/20' : 
+                          'text-amber-400 bg-amber-500/10 border-amber-500/20';
+      
+      const rowHtml = `
+          <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+              <td class="text-slate-500 text-xs">${index}</td>
+              <td class="text-slate-300 font-mono text-xs">${server}</td>
+              <td class="text-slate-300 font-mono text-xs">${uid}</td>
+              <td class="text-white font-medium text-sm truncate max-w-[150px]">${username}</td>
+              <td>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${statusClass}">
+                      ${status}
+                  </span>
+              </td>
+          </tr>
+      `;
+      $('#bulk-results-body').append(rowHtml);
+  }
   }
   
   function renderBulkTable(rows) {
